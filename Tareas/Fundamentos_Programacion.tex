@@ -1,0 +1,218 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{amsmath, amssymb, amsthm}  % Base fundamental
+\usepackage{mathtools}                 % Mejoras prácticas
+\usepackage{physics}                   % Notación simplificada
+\usepackage{nicematrix}                % Matrices con mejoras tipográficas
+\usepackage{witharrows}                % Ecuaciones con flechas explicativas
+\usepackage{cases}                     % Sistemas de ecuaciones% Notación simplificada
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{listings}
+\usepackage{algorithm2e}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{booktabs} % Tablas
+
+% Path to image
+% \graphicspath{ {./image/} }
+
+% Renombrar caption de tabular
+\addto\captionsspanish{
+  \renewcommand{\tablename}{Tabla}
+}
+
+% comando personalizados
+% \newcommand{\ixchel}[1]{\textnormal{IXCHEL#1D}}
+
+% geometry
+\geometry{
+    letterpaper,
+    total={170mm,230mm},
+    left=20mm,
+    top=20mm,
+}
+
+% Colores personalizados
+\definecolor{commentcolor}{RGB}{0,128,0}   % verde para comentarios
+\definecolor{keywordcolor}{RGB}{0,0,180}   % azul para palabras clave
+\definecolor{stringcolor}{RGB}{163,21,21}  % rojo para strings
+\definecolor{lightgray}{gray}{0.97}
+
+% Configuración general para Fortran + OpenACC
+\lstdefinestyle{bashpp}{
+    language={bash},          % Fortran 90
+    basicstyle=\ttfamily\small, % Fuente monoespaciada y más pequeña
+    keywordstyle=\color{keywordcolor}\bfseries, % Palabras clave en azul negrita
+    commentstyle=\color{commentcolor}\itshape,  % Comentarios en verde cursiva
+    stringstyle=\color{stringcolor},           % Strings en rojo
+    breaklines=true,            % Romper líneas largas automáticamente
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}, % Indicador de quiebre
+    showstringspaces=false,     % No marcar espacios en strings
+    numbers=left,               % Numeración de líneas a la izquierda
+    numberstyle=\tiny,          % Tamaño de fuente de los números
+    stepnumber=1,               % Numerar cada línea
+    numbersep=5pt,              % Separación entre números y código
+%     frame=single,               % Dibuja un recuadro alrededor
+%     framerule=0.4pt,            % Grosor del recuadro
+    xleftmargin=10pt,           % Margen izquierdo dentro del box
+    xrightmargin=10pt,          % Margen derecho dentro del box
+    aboveskip=10pt,             % Espacio arriba del box
+    belowskip=10pt,             % Espacio debajo del box
+    backgroundcolor=\color{lightgray}  % color de fondo
+}
+
+% Title Page
+\title{Fundamentos de Programación con MATLAB \\ Ejercicios}
+\author{Computación y Análisis de Datos Geofísicos}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+\section{Lectura y comprensión de código}
+
+El siguiente código es un temporizador de cuenta atrás y está escrito en el lenguaje de scripting
+Bash. Bash (acrónimo de Bourne-again shell) es un intérprete de comandos y lenguaje de
+scripting desarrollado para sistemas operativos Unix-like, como Linux, macOS y Windows (a través
+de Cygwin, MinGW o WSL). Traduce el código a MATLAB.\bigskip
+
+\begin{lstlisting}[style=bashpp]
+#!/bin/bash
+set -uo pipefail
+
+function timer() {
+  local tarea=$1
+  local minutos=$2
+  local segundos=$((minutos * 60))
+  echo "Comenzando: $tarea"
+
+  while [[ $segundos -ge 0 ]]
+  do
+    local min=$((segundos / 60))
+    local seg=$((segundos % 60))
+    printf "\rTiempo Restante: %02d:%02d" $min $seg
+    sleep 1
+    segundos=$((segundos - 1))
+  done
+
+  printf "\nTiempo dedicado a $tarea terminado\n"
+}
+
+timer "$@"
+\end{lstlisting}
+
+\newpage
+\section{Integración Numérica}
+
+Existen diversas estrategias para aproximar numericamente la integral de una función. Uno de estos
+métodos es la conocida **Regla de Simpson** (nombrada así en honor de Thomas Simpson):
+$$
+\int_a^b f(x)dx \approx \frac{b - a}{6}\left[f(a) + 4f\left(\frac{a + b}{2}\right) + f(b)\right]
+$$
+Para aplicar la regla de Simpson realice lo siguiente: se divide el intervalo $[a, b]$ en $n$
+subintervalos iguales (con $n$ par), de manera que $x_i = a + ih$, donde $h = \frac{b -a}{n}$ para
+$i = 0,1,2,3,...,n$. Implementando la regla de Simpson en cada subintervalo obtenido:
+$$
+[x_{j-1}, x_{j+1}], \quad j = 1,3,5,...,n-1,
+$$
+se obtiene que:
+$$
+\int_{x_{j-1}}^{x_{j+1}} f(x)dx \approx \frac{x_{j+1} - x_{j-1}}{6} \left[f(x_{j-1}) + 4f(x_j) +
+f(x_{j+1})\right]
+$$
+Sólo hace falta sumar las aproximaciones de la integral de todos los subintervalos:
+$$
+\int_{a}^{b} f(x)dx \approx \frac{h}{3} \left[f(a) + 2 \sum_{k=1}^{\frac{n}{2}-1}f(x_{2k}) + 4
+\sum_{k=1}^{\frac{n}{2}}f(x_{2k-1}) + f(b)\right]
+$$
+Implementa la regla de Simpson antes mostrada en MATLAB.
+%
+\newpage
+\section{Método del Gradiente Conjugado}
+%
+En matemática, el método del gradiente conjugado es un algoritmo para resolver numéricamente los
+sistemas de ecuaciones lineales cuyas matrices son simétricas y definidas positivas.\bigskip
+
+Supongamos que queremos resolver el siguiente sistema de ecuaciones lineales
+$$ Ax = b $$ donde la matriz $A$ es de tamaño $n \times n$, es simétrica (i.e., $A^T = A$) y
+definida positiva (i.e., $x^T A x > 0$ para todos los vectores no cero $x \in \mathbb{R}^n$).
+Denotamos la única solución de este sistema por $\overline{x}$. El algoritmo del Gradiente
+Conjugado para aproximar la solución del sistema de ecuaciones lineales
+$Ax = b$ se muestra a continuación:
+\begin{algorithm}
+\KwIn{$A$: matrix, $b$: vector, $x_0$: initial solution, $tol$: tolerance, n: iteration number}
+\KwOut{$\overline{x}$: solution of $Ax=b$}
+\BlankLine
+$r_0 \gets b - A x_0$ \\
+\If{$\| r_0 \| < tol$}{
+ \Return{$x_0$} \qquad \tcp{as solution of $Ax=b$}
+}
+$p_0 \gets r_0$ \\
+$k \gets 0$ \\
+\BlankLine
+\Repeat{$k \leq n$}{
+$a_k \gets \dfrac{r_k \cdot r_k}{p_k \cdot Ap_k}$ \\
+$x_{k+1} \gets x_k + a_kp_k$ \\
+$r_{k+1} \gets r_k - a_kAp_k$ \\
+\If{$\|r_{k+1}\| < tol$}{
+\Return{$x_{k+1}$} \qquad  \tcp{as solution of $Ax=b$}
+}
+$\beta_k \gets \dfrac{r_{k+1} \cdot r_{k+1}}{r_k \cdot r_k}$ \\
+$p_{k+1} \gets r_{k+1} + \beta_k p_k$ \\
+$k \gets k + 1$
+}
+\end{algorithm}
+
+
+El vector inicial $x_0$ puede ser una aproximación a la solución o $\mathbf{0} \in
+\mathbb{R}^n$.\bigskip
+
+Cree un programa que lea la matriz almacenada en \verb|matrices_tarea.xlsx| (hoja 1)
+y el vector almacenado en \verb|matrices_tarea.xlsx| (hoja 2) y que calcule la
+solución del sistema utilizando el método del gradiente conjugado. Primero se debe verificar que
+la matriz sea simétrica y definida positiva.\bigskip
+
+Sugerencias:
+\begin{itemize}
+  \item Para saber si una matriz es definida positiva calcule sus eigenvalores y vea que todos los
+eigenvalores sean positivos.
+  \item Utilice las funciones incorporadas issymmetric, all y eig de MATLAB.
+\end{itemize}
+
+
+\section{Graficación}
+Utilice el archivo \verb|csv| llamado \verb|lancha2_221016211519_X1548.csv| y realice las
+siguientes gráficas:
+
+% \begin{center}
+% \begin{tabular}[b]{ll}
+% Variable & Tipo de gráfico recomendado \\
+% Presión vs. Tiempo & Gráfico de líneas \\
+% Temperatura vs. Tiempo & Gráfico de líneas \\
+% Conductividad vs. Tiempo & Gráfico de líneas \\
+% Presión vs. Temperatura & Gráfico de dispersión
+% \end{tabular}
+% \end{center}
+
+\begin{table}[htbp]
+\centering
+% \caption{Tipo de gráficos recomendados para diferentes variables}
+% \label{tab:graficos}
+\begin{tabular}{ll}
+\toprule
+\textbf{Variable} & \textbf{Tipo de gráfico recomendado} \\
+\midrule
+Presión vs. Tiempo & Gráfico de líneas \\
+Temperatura vs. Tiempo & Gráfico de líneas \\
+Conductividad vs. Tiempo & Gráfico de líneas \\
+Presión vs. Temperatura & Gráfico de dispersión \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
